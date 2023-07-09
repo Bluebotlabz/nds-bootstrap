@@ -8,7 +8,7 @@ extern "C"
 {
 #endif
 
-int loadFromSD(configuration* conf, const char *bootstrapPath);
+int loadFromARGV(configuration* conf, const char *bootstrapPath, int argc, char** argv);
 
 #ifdef __cplusplus
 }

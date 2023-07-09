@@ -6,6 +6,7 @@
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
+export LIBSLIM  		:=	$(CURDIR)/../libslim/libslim
 
 # These set the information text in the nds file
 GAME_TITLE     := NDS BOOTSTRAP
@@ -58,14 +59,14 @@ LDFLAGS	=	-specs=ds_arm9.specs -g -Wl,--gc-sections $(ARCH) -Wl,-Map,$(notdir $*
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project (order is important)
 #---------------------------------------------------------------------------------
-LIBS	:= 	-lfat -lnds9
+LIBS	:= 	-lslim -lnds9
 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS)
+LIBDIRS	:=	$(LIBSLIM) $(LIBNDS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -131,7 +132,7 @@ export GAME_ICON := $(CURDIR)/$(ASSETS)/icon.bmp
 #.PHONY: sdengine bootloader bootstub BootStrap clean
 .PHONY: all dist release nightly bootloader bootloaderInject bootstub BootStrap dldi/dsisd.dldi sdengine clean
 
-all:	$(OUTPUT)
+all:	libslim $(OUTPUT)
 
 dist:	all
 #	@rm	-fr	hbmenu
@@ -237,3 +238,9 @@ else
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
+
+libslim: $(LIBSLIM)/lib/libslim.a
+
+$(LIBSLIM)/lib/libslim.a:
+	mkdir -p $(LIBSLIM)/lib
+	cd $(LIBSLIM) && $(MAKE)

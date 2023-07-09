@@ -513,8 +513,9 @@ int main(int argc, char** argv) {
 	fifoSendValue32(FIFO_PM, PM_REQ_SLEEP_DISABLE);
 
 	configuration* conf = (configuration*)malloc(sizeof(configuration));
+	int status;
 
-	int status = loadFromSD(conf, argv[0]);
+	status = loadFromARGV(conf, argv[0], argc, argv); // Loads configuration from SD card slot
 	sdFound = (conf->sdFound && !conf->b4dsMode);
 	bootstrapOnFlashcard = conf->bootstrapOnFlashcard;
 

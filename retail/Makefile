@@ -6,6 +6,7 @@
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
+export LIBSLIM  		:=	$(CURDIR)/../libslim/libslim
 
 # These set the information text in the nds file
 GAME_TITLE     := nds-bootstrap
@@ -57,14 +58,14 @@ LDFLAGS	=	-specs=ds_arm9.specs -g -Wl,--gc-sections $(ARCH) -Wl,-Map,$(notdir $*
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project (order is important)
 #---------------------------------------------------------------------------------
-LIBS	:= 	-lfat -lnds9
+LIBS	:= 	-lslim -lnds9
 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS)
+LIBDIRS	:=	$(LIBSLIM) $(LIBNDS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -128,7 +129,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 export GAME_ICON := $(CURDIR)/$(ASSETS)/icon.bmp
 
 #.PHONY: cardengine_arm7 cardengine_arm9 bootloader BootStrap clean
-.PHONY: all dist release nightly bootloader bootloader2 bootloaderi bootloaderi2 cardengine_arm7 cardengine_arm9_igm cardengine_arm9 cardengine_arm9_alt cardengine_arm9_alt2 cardengine_arm9_extmem cardenginei_arm7 cardenginei_arm7_alt cardenginei_arm7_twlsdk cardenginei_arm7_dsiware cardenginei_arm7_cheat cardenginei_arm9_igm cardenginei_arm9 cardenginei_arm9_alt cardenginei_arm9_dldi cardenginei_arm9_twlsdk cardenginei_arm9_twlsdk_dldi cardenginei_arm9_dsiware cardenginei_arm9_romInRam arm7/$(TARGET).elf arm9/$(TARGET).elf clean
+.PHONY: all dist libslim release nightly bootloader bootloader2 bootloaderi bootloaderi2 cardengine_arm7 cardengine_arm9_igm cardengine_arm9 cardengine_arm9_alt cardengine_arm9_alt2 cardengine_arm9_extmem cardenginei_arm7 cardenginei_arm7_alt cardenginei_arm7_twlsdk cardenginei_arm7_dsiware cardenginei_arm7_cheat cardenginei_arm9_igm cardenginei_arm9 cardenginei_arm9_alt cardenginei_arm9_dldi cardenginei_arm9_twlsdk cardenginei_arm9_twlsdk_dldi cardenginei_arm9_dsiware cardenginei_arm9_romInRam arm7/$(TARGET).elf arm9/$(TARGET).elf clean
 
 all:	$(OUTPUT)
 
@@ -139,6 +140,12 @@ dist:	all
 #	@cp BootStrap/_BOOT_MP.NDS BootStrap/TTMENU.DAT BootStrap/_DS_MENU.DAT BootStrap/ez5sys.bin BootStrap/akmenu4.nds hbmenu
 #	@tar -cvjf hbmenu-$(VERSION).tar.bz2 hbmenu testfiles README.md COPYING -X exclude.lst
 
+libslim: $(LIBSLIM)/lib/libslim.a
+
+$(LIBSLIM)/lib/libslim.a:
+	mkdir -p $(LIBSLIM)/lib
+	cd $(LIBSLIM) && $(MAKE)
+
 release:	$(OUTPUT)
 	@rm -f $(CURDIR)/$(BIN)/$(TARGET)-release.nds
 	@mv $(OUTPUT) $(CURDIR)/$(BIN)/$(TARGET)-release.nds
@@ -147,7 +154,7 @@ nightly:	$(OUTPUT)
 	@rm -f $(CURDIR)/$(BIN)/$(TARGET)-nightly.nds
 	@mv $(OUTPUT) $(CURDIR)/$(BIN)/$(TARGET)-nightly.nds
 
-$(OUTPUT):	$(BIN) arm7/$(TARGET).elf arm9/$(TARGET).elf
+$(OUTPUT):	libslim $(BIN) arm7/$(TARGET).elf arm9/$(TARGET).elf
 	ndstool	-c $(OUTPUT) -7 arm7/$(TARGET).elf -9 arm9/$(TARGET).elf -d $(NITRODATA) \
 			-b $(GAME_ICON) "$(GAME_TITLE);$(GAME_SUBTITLE1)" \
 			-g KBSE 01 "NDSBOOTSTRAP" -z 80040000 -u 00030004 -a 00000138 -p 00000001
@@ -287,6 +294,7 @@ clean:
 	@$(MAKE) -C bootloader2 clean
 	@$(MAKE) -C bootloaderi clean
 	@$(MAKE) -C bootloaderi2 clean
+	@$(MAKE) -C $(LIBSLIM) clean
 
 $(DATA):
 	@mkdir -p $(DATA)

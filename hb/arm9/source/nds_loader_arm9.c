@@ -26,7 +26,7 @@
 #include <limits.h>
 
 #include <unistd.h>
-#include <fat.h>
+#include <slim.h>
 
 #include "lzss.h"
 #include "tonccpy.h"

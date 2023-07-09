@@ -20,7 +20,8 @@
 
 #include <nds.h>
 #include <nds/fifocommon.h>
-#include <fat.h>
+#include <nds/arm9/dldi.h>
+#include <slim.h>
 #include <limits.h>
 
 #include <stdio.h>
@@ -223,7 +224,7 @@ int main( int argc, char **argv) {
 
     //printf("fat init ...");    
 
-	if (fatMountSimple("fat", get_io_dsisd())) {
+	if (fatMountSimple("fat:/", get_io_dsisd())) {
     	nocashMessage("fat inited");
 
   		easysave::ini config_file("fat:/_nds/nds-bootstrap.ini");

@@ -14,7 +14,7 @@
 #include <nds/fifocommon.h>
 #include <nds/arm9/console.h>
 #include <nds/debug.h>*/
-#include <fat.h>
+#include <slim.h>
 #include <easysave/ini.hpp>
 #include "myDSiMode.h"
 #include "lzss.h"
@@ -113,93 +113,198 @@ void addTwlDevice(const char letter, u8 flags, u8 accessRights, const char* name
 extern std::string ReplaceAll(std::string str, const std::string& from, const std::string& to);
 extern bool extention(const std::string& filename, const char* ext);
 
-static void load_conf(configuration* conf, const char* fn) {
+static void load_conf(configuration* conf, const char* fn, int argc, char** argv) {
 	easysave::ini config_file(fn);
 
-	// Debug
-	conf->debug = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "DEBUG", "0").c_str(), NULL, 0);
-
-	// B4DS mode
-	conf->b4dsMode = strtol(config_file.fetch("NDS-BOOTSTRAP", "B4DS_MODE", "0").c_str(), NULL, 0);
-
+	// Load params from argv
 	// NDS path
-	conf->ndsPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "NDS_PATH").c_str());
-
-	// APP path (SFN version of NDS path)
-	conf->appPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "APP_PATH").c_str());
+	if (argc >= 2 && argv[1] != "") {
+		conf->ndsPath = strdup(argv[1]);
+	} else {
+		conf->ndsPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "NDS_PATH").c_str());
+	}
 
 	// SAV/PUB path
-	conf->savPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "SAV_PATH").c_str());
+	if (argc >= 3 && argv[2] != "") {
+		conf->savPath = strdup(argv[2]);
+	} else {
+		conf->savPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "SAV_PATH").c_str());
+	}
+
+	// APP path (SFN version of NDS path)
+	if (argc >= 4 && argv[3] != "") {
+		conf->appPath = strdup(argv[3]);
+	} else {
+		conf->appPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "APP_PATH").c_str());
+	}
 
 	// PRV path
-	conf->prvPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "PRV_PATH").c_str());
+	if (argc >= 5 && argv[4] != "") {
+		conf->prvPath = strdup(argv[4]);
+	} else {
+		conf->prvPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "PRV_PATH").c_str());
+	}
+
+	// Debug
+	if (argc >= 6 && argv[5] != "") {
+		conf->debug = (bool)strtol(argv[5], NULL, 0);
+	} else {
+		conf->debug = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "DEBUG", "0").c_str(), NULL, 0);
+	}
+
+	// B4DS mode
+	if (argc >= 7 && argv[6] != "") {
+		conf->b4dsMode = strtol(argv[6], NULL, 0);
+	} else {
+		conf->b4dsMode = strtol(config_file.fetch("NDS-BOOTSTRAP", "B4DS_MODE", "0").c_str(), NULL, 0);
+	}
 
 	// SDK2.0 Donor NDS path
-	conf->donor20Path = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONOR20_NDS_PATH").c_str());
+	if (argc >= 8 && argv[7] != "") {
+		conf->donor20Path = strdup(argv[7]);
+	} else {
+		conf->donor20Path = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONOR20_NDS_PATH").c_str());
+	}
 
 	// SDK5.0 (TWL) DSi-Enhanced Donor NDS path
-	conf->donorTwl0Path = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWL0_NDS_PATH").c_str());
+	if (argc >= 9 && argv[8] != "") {
+		conf->donorTwl0Path = strdup(argv[8]);
+	} else {
+		conf->donorTwl0Path = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWL0_NDS_PATH").c_str());
+	}
 
 	// SDK5.x (TWL) DSi-Enhanced Donor NDS path
-	conf->donorTwlPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWL_NDS_PATH").c_str());
+	if (argc >= 10 && argv[9] != "") {
+		conf->donorTwlPath = strdup(argv[9]);
+	} else {
+		conf->donorTwlPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWL_NDS_PATH").c_str());
+	}
 
 	// SDK5.0 (TWL) DSi-Exclusive Donor NDS path
-	conf->donorTwlOnly0Path = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWLONLY0_NDS_PATH").c_str());
+	if (argc >= 11 && argv[10] != "") {
+		conf->donorTwlOnly0Path = strdup(argv[10]);
+	} else {
+		conf->donorTwlOnly0Path = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWLONLY0_NDS_PATH").c_str());
+	}
 
 	// SDK5.x (TWL) DSi-Exclusive Donor NDS path
-	conf->donorTwlOnlyPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWLONLY_NDS_PATH").c_str());
+	if (argc >= 12 && argv[11] != "") {
+		conf->donorTwlOnlyPath = strdup(argv[11]);
+	} else {
+		conf->donorTwlOnlyPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "DONORTWLONLY_NDS_PATH").c_str());
+	}
 
 	// GBA path
-	conf->gbaPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "GBA_PATH").c_str());
+	if (argc >= 13 && argv[12] != "") {
+		conf->gbaPath = strdup(argv[12]);
+	} else {
+		conf->gbaPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "GBA_PATH").c_str());
+	}
 
 	// GBA SAV path
-	conf->gbaSavPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "GBA_SAV_PATH").c_str());
+	if (argc >= 14 && argv[13] != "") {
+		conf->gbaSavPath = strdup(argv[13]);
+	} else {
+		conf->gbaSavPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "GBA_SAV_PATH").c_str());
+	}
 
 	// AP-patch path
-	conf->apPatchPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "AP_FIX_PATH").c_str());
+	if (argc >= 15 && argv[14] != "") {
+		conf->apPatchPath = strdup(argv[14]);
+	} else {
+		conf->apPatchPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "AP_FIX_PATH").c_str());
+	}
 
 	// Language
-	conf->language = strtol(config_file.fetch("NDS-BOOTSTRAP", "LANGUAGE", "-1").c_str(), NULL, 0);
+	if (argc >= 16 && argv[15] != "") {
+		conf->language = strtol(argv[15], NULL, 0);
+	} else {
+		conf->language = strtol(config_file.fetch("NDS-BOOTSTRAP", "LANGUAGE", "-1").c_str(), NULL, 0);
+	}
 	if (conf->language < -1) conf->language = -1;
 
 	// Region
-	conf->region = strtol(config_file.fetch("NDS-BOOTSTRAP", "REGION", "-1").c_str(), NULL, 0);
+	if (argc >= 17 && argv[16] != "") {
+		conf->region = strtol(argv[16], NULL, 0);
+	} else {
+		conf->region = strtol(config_file.fetch("NDS-BOOTSTRAP", "REGION", "-1").c_str(), NULL, 0);
+	}
 	if (conf->region < -1) conf->region = -1;
 
 	// Use ROM Region
-	conf->useRomRegion = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "USE_ROM_REGION", "1").c_str(), NULL, 0);
+	if (argc >= 18 && argv[17] != "") {
+		conf->useRomRegion = (bool)strtol(argv[17], NULL, 0);
+	} else {
+		conf->useRomRegion = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "USE_ROM_REGION", "1").c_str(), NULL, 0);
+	}
 
 	// SDNAND
-	conf->sdNand = strtol(config_file.fetch("NDS-BOOTSTRAP", "SDNAND", "0").c_str(), NULL, 0);
+	if (argc >= 19 && argv[18] != "") {
+		conf->sdNand = strtol(argv[18], NULL, 0);
+	} else {
+		conf->sdNand = strtol(config_file.fetch("NDS-BOOTSTRAP", "SDNAND", "0").c_str(), NULL, 0);
+	}
 
 	if (dsiFeatures()) {
 		// DSi mode
-		conf->dsiMode = strtol(config_file.fetch("NDS-BOOTSTRAP", "DSI_MODE", "1").c_str(), NULL, 0);
+		if (argc >= 20 && argv[19] != "") {
+		conf->dsiMode = strtol(argv[19], NULL, 0);
+		} else {
+			conf->dsiMode = strtol(config_file.fetch("NDS-BOOTSTRAP", "DSI_MODE", "1").c_str(), NULL, 0);
+		}
 	}
 
 	// Donor SDK version
-	conf->donorSdkVer = strtol(config_file.fetch("NDS-BOOTSTRAP", "DONOR_SDK_VER", "0").c_str(), NULL, 0);
+	if (argc >= 21 && argv[20] != "") {
+		conf->donorSdkVer = strtol(argv[20], NULL, 0);
+	} else {
+		conf->donorSdkVer = strtol(config_file.fetch("NDS-BOOTSTRAP", "DONOR_SDK_VER", "0").c_str(), NULL, 0);
+	}
 
 	// Patch MPU region
-	conf->patchMpuRegion = strtol(config_file.fetch("NDS-BOOTSTRAP", "PATCH_MPU_REGION", "0").c_str(), NULL, 0);
+	if (argc >= 22 && argv[21] != "") {
+		conf->patchMpuRegion = strtol(argv[21], NULL, 0);
+	} else {
+		conf->patchMpuRegion = strtol(config_file.fetch("NDS-BOOTSTRAP", "PATCH_MPU_REGION", "0").c_str(), NULL, 0);
+	}
 
 	// Patch MPU size
-	conf->patchMpuSize = strtol(config_file.fetch("NDS-BOOTSTRAP", "PATCH_MPU_SIZE", "0").c_str(), NULL, 0);
+	if (argc >= 23 && argv[22] != "") {
+		conf->patchMpuSize = strtol(argv[22], NULL, 0);
+	} else {
+		conf->patchMpuSize = strtol(config_file.fetch("NDS-BOOTSTRAP", "PATCH_MPU_SIZE", "0").c_str(), NULL, 0);
+	}
 
 	// Extended memory
-	conf->extendedMemory = strtol(config_file.fetch("NDS-BOOTSTRAP", "EXTENDED_MEMORY", "0").c_str(), NULL, 0);
+	if (argc >= 24 && argv[23] != "") {
+		conf->extendedMemory = strtol(argv[23], NULL, 0);
+	} else {
+		conf->extendedMemory = strtol(config_file.fetch("NDS-BOOTSTRAP", "EXTENDED_MEMORY", "0").c_str(), NULL, 0);
+	}
 
 	// Console model
-	conf->consoleModel = strtol(config_file.fetch("NDS-BOOTSTRAP", "CONSOLE_MODEL", "0").c_str(), NULL, 0);
+	if (argc >= 25 && argv[24] != "") {
+		conf->consoleModel = strtol(argv[24], NULL, 0);
+	} else {
+		conf->consoleModel = strtol(config_file.fetch("NDS-BOOTSTRAP", "CONSOLE_MODEL", "0").c_str(), NULL, 0);
+	}
 
 	// Color mode
 	//conf->colorMode = strtol(config_file.fetch("NDS-BOOTSTRAP", "COLOR_MODE", "0").c_str(), NULL, 0);
 
 	// ROM read LED
-	conf->romRead_LED = strtol(config_file.fetch("NDS-BOOTSTRAP", "ROMREAD_LED", "0").c_str(), NULL, 0);
+	if (argc >= 26 && argv[25] != "") {
+		conf->consoleModel = strtol(argv[25], NULL, 0);
+	} else {
+		conf->romRead_LED = strtol(config_file.fetch("NDS-BOOTSTRAP", "ROMREAD_LED", "0").c_str(), NULL, 0);
+	}
 
 	// DMA ROM read LED
-	conf->dmaRomRead_LED = strtol(config_file.fetch("NDS-BOOTSTRAP", "DMA_ROMREAD_LED", "0").c_str(), NULL, 0);
+	if (argc >= 27 && argv[26] != "") {
+		conf->consoleModel = strtol(argv[26], NULL, 0);
+	} else {
+		conf->dmaRomRead_LED = strtol(config_file.fetch("NDS-BOOTSTRAP", "DMA_ROMREAD_LED", "0").c_str(), NULL, 0);
+	}
 
 	// get the gamecode
 	FILE* romFile = fopen(conf->ndsPath, "rb");
@@ -209,111 +314,234 @@ static void load_conf(configuration* conf, const char* fn) {
 	fclose(romFile);
 
 	// Async card read
-	switch(strtol(config_file.fetch("NDS-BOOTSTRAP", "ASYNC_CARD_READ", "-1").c_str(), NULL, 0)) {
-		case 0:
-			conf->asyncCardRead = false;
-			break;
-		case 1:
-			conf->asyncCardRead = true;
-			break;
-		default:
-#ifdef DEFAULT_ASYNC_CARD_READ
-			// TODO: If the list gets large enough, switch to bsearch().
-			for (unsigned int i = 0; i < sizeof(asyncReadExcludeList)/sizeof(asyncReadExcludeList[0]); i++) {
-				if (memcmp(gameTid, asyncReadExcludeList[i], 3) == 0) {
-					// Found match
-					conf->asyncCardRead = false;
-					break;
+	if (argc >= 28 && argv[27] != "") {
+		switch(strtol(argv[27], NULL, 0)) {
+			case 0:
+				conf->asyncCardRead = false;
+				break;
+			case 1:
+				conf->asyncCardRead = true;
+				break;
+			default:
+	#ifdef DEFAULT_ASYNC_CARD_READ
+				// TODO: If the list gets large enough, switch to bsearch().
+				for (unsigned int i = 0; i < sizeof(asyncReadExcludeList)/sizeof(asyncReadExcludeList[0]); i++) {
+					if (memcmp(gameTid, asyncReadExcludeList[i], 3) == 0) {
+						// Found match
+						conf->asyncCardRead = false;
+						break;
+					}
 				}
-			}
-			conf->asyncCardRead = true;
-#else
-			conf->asyncCardRead = false;
-#endif
-			break;
+				conf->asyncCardRead = true;
+	#else
+				conf->asyncCardRead = false;
+	#endif
+				break;
+		}
+	}
+	else {
+		switch(strtol(config_file.fetch("NDS-BOOTSTRAP", "ASYNC_CARD_READ", "-1").c_str(), NULL, 0)) {
+			case 0:
+				conf->asyncCardRead = false;
+				break;
+			case 1:
+				conf->asyncCardRead = true;
+				break;
+			default:
+	#ifdef DEFAULT_ASYNC_CARD_READ
+				// TODO: If the list gets large enough, switch to bsearch().
+				for (unsigned int i = 0; i < sizeof(asyncReadExcludeList)/sizeof(asyncReadExcludeList[0]); i++) {
+					if (memcmp(gameTid, asyncReadExcludeList[i], 3) == 0) {
+						// Found match
+						conf->asyncCardRead = false;
+						break;
+					}
+				}
+				conf->asyncCardRead = true;
+	#else
+				conf->asyncCardRead = false;
+	#endif
+				break;
+		}
 	}
 
 	// Card read DMA
-	switch(strtol(config_file.fetch("NDS-BOOTSTRAP", "CARD_READ_DMA", "-1").c_str(), NULL, 0)) {
-		case 0:
-			conf->cardReadDMA = false;
-			break;
-		case 1:
-			conf->cardReadDMA = true;
-		default:
-#ifdef DEFAULT_CARD_READ_DMA
-			// TODO: If the list gets large enough, switch to bsearch().
-			for (unsigned int i = 0; i < sizeof(cardReadDMAExcludeList)/sizeof(cardReadDMAExcludeList[0]); i++) {
-				if (memcmp(gameTid, cardReadDMAExcludeList[i], 3) == 0) {
-					// Found match
-					conf->cardReadDMA = false;
-					break;
+	if (argc >= 29 && argv[28] != "") {
+		switch(strtol(argv[28], NULL, 0)) {
+			case 0:
+				conf->cardReadDMA = false;
+				break;
+			case 1:
+				conf->cardReadDMA = true;
+			default:
+	#ifdef DEFAULT_CARD_READ_DMA
+				// TODO: If the list gets large enough, switch to bsearch().
+				for (unsigned int i = 0; i < sizeof(cardReadDMAExcludeList)/sizeof(cardReadDMAExcludeList[0]); i++) {
+					if (memcmp(gameTid, cardReadDMAExcludeList[i], 3) == 0) {
+						// Found match
+						conf->cardReadDMA = false;
+						break;
+					}
 				}
-			}
-			// default settings if not in list
-			conf->cardReadDMA = true;
-#else
-			conf->cardReadDMA = false;
-#endif
-			break;
+				// default settings if not in list
+				conf->cardReadDMA = true;
+	#else
+				conf->cardReadDMA = false;
+	#endif
+				break;
+		}
+	}
+	else {
+		switch(strtol(config_file.fetch("NDS-BOOTSTRAP", "CARD_READ_DMA", "-1").c_str(), NULL, 0)) {
+			case 0:
+				conf->cardReadDMA = false;
+				break;
+			case 1:
+				conf->cardReadDMA = true;
+			default:
+	#ifdef DEFAULT_CARD_READ_DMA
+				// TODO: If the list gets large enough, switch to bsearch().
+				for (unsigned int i = 0; i < sizeof(cardReadDMAExcludeList)/sizeof(cardReadDMAExcludeList[0]); i++) {
+					if (memcmp(gameTid, cardReadDMAExcludeList[i], 3) == 0) {
+						// Found match
+						conf->cardReadDMA = false;
+						break;
+					}
+				}
+				// default settings if not in list
+				conf->cardReadDMA = true;
+	#else
+				conf->cardReadDMA = false;
+	#endif
+				break;
+		}
 	}
 
 	// Force sleep patch
-	conf->forceSleepPatch = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "FORCE_SLEEP_PATCH", "0").c_str(), NULL, 0);
+	if (argc >= 30 && argv[29] != "") {
+		conf->consoleModel = strtol(argv[24], NULL, 0);
+	} else {
+		conf->forceSleepPatch = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "FORCE_SLEEP_PATCH", "0").c_str(), NULL, 0);
+	}
 
 	// Precise volume control
-	conf->preciseVolumeControl = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "PRECISE_VOLUME_CONTROL", "0").c_str(), NULL, 0);
+	if (argc >= 31 && argv[30] != "") {
+		conf->consoleModel = strtol(argv[24], NULL, 0);
+	} else {
+		conf->preciseVolumeControl = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "PRECISE_VOLUME_CONTROL", "0").c_str(), NULL, 0);
+	}
 
 	// Logging
-	conf->logging = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "LOGGING", "0").c_str(), NULL, 0);
+	if (argc >= 32 && argv[31] != "") {
+		conf->consoleModel = strtol(argv[24], NULL, 0);
+	} else {
+		conf->logging = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "LOGGING", "0").c_str(), NULL, 0);
+	}
 
 	// Macro mode
-	conf->macroMode = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "MACRO_MODE", "0").c_str(), NULL, 0);
+	if (argc >= 33 && argv[32] != "") {
+		conf->consoleModel = strtol(argv[24], NULL, 0);
+	} else {
+		conf->macroMode = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "MACRO_MODE", "0").c_str(), NULL, 0);
+	}
 
 	// Sleep mode
-	conf->sleepMode = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "SLEEP_MODE", "1").c_str(), NULL, 0);
+	if (argc >= 34 && argv[33] != "") {
+		conf->consoleModel = strtol(argv[24], NULL, 0);
+	} else {
+		conf->sleepMode = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "SLEEP_MODE", "1").c_str(), NULL, 0);
+	}
 
 	// Boost CPU
-	switch(strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_CPU", "-1").c_str(), NULL, 0)) {
-		case 0:
-			conf->boostCpu = false;
-			break;
-		case 1:
-			conf->boostCpu = true;
-			break;
-		default:
-#ifdef DEFAULT_CPU_BOOST
-			// TODO: If the list gets large enough, switch to bsearch().
-			for (unsigned int i = 0; i < sizeof(twlClockExcludeList)/sizeof(twlClockExcludeList[0]); i++) {
-				if (memcmp(gameTid, twlClockExcludeList[i], 3) == 0) {
-					// Found match
-					if(dsiFeatures() && conf->dsiMode != 0) conf->dsiMode = 0;
-					conf->boostCpu = false;
-					break;
+	if (argc >= 35 && argv[34] != "") {
+		switch(strtol(argv[34], NULL, 0)) {
+			case 0:
+				conf->boostCpu = false;
+				break;
+			case 1:
+				conf->boostCpu = true;
+				break;
+			default:
+	#ifdef DEFAULT_CPU_BOOST
+				// TODO: If the list gets large enough, switch to bsearch().
+				for (unsigned int i = 0; i < sizeof(twlClockExcludeList)/sizeof(twlClockExcludeList[0]); i++) {
+					if (memcmp(gameTid, twlClockExcludeList[i], 3) == 0) {
+						// Found match
+						if(dsiFeatures() && conf->dsiMode != 0) conf->dsiMode = 0;
+						conf->boostCpu = false;
+						break;
+					}
 				}
-			}
-			conf->boostCpu = true;
-#else
-			conf->boostCpu = false;
-#endif
-			break;
+				conf->boostCpu = true;
+	#else
+				conf->boostCpu = false;
+	#endif
+				break;
+		}
+	} else {
+		switch(strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_CPU", "-1").c_str(), NULL, 0)) {
+			case 0:
+				conf->boostCpu = false;
+				break;
+			case 1:
+				conf->boostCpu = true;
+				break;
+			default:
+	#ifdef DEFAULT_CPU_BOOST
+				// TODO: If the list gets large enough, switch to bsearch().
+				for (unsigned int i = 0; i < sizeof(twlClockExcludeList)/sizeof(twlClockExcludeList[0]); i++) {
+					if (memcmp(gameTid, twlClockExcludeList[i], 3) == 0) {
+						// Found match
+						if(dsiFeatures() && conf->dsiMode != 0) conf->dsiMode = 0;
+						conf->boostCpu = false;
+						break;
+					}
+				}
+				conf->boostCpu = true;
+	#else
+				conf->boostCpu = false;
+	#endif
+				break;
+		}
 	}
 
 	// Boost VRAM
-	conf->boostVram = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_VRAM", "0").c_str(), NULL, 0);
+	if (argc >= 36 && argv[35] != "") {
+		conf->consoleModel = strtol(argv[35], NULL, 0);
+	} else {
+		conf->boostVram = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_VRAM", "0").c_str(), NULL, 0);
+	}
 
 	// Sound/Mic frequency
-	conf->soundFreq = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "SOUND_FREQ", "0").c_str(), NULL, 0);
+	if (argc >= 37 && argv[36] != "") {
+		conf->consoleModel = strtol(argv[36], NULL, 0);
+	} else {
+		conf->soundFreq = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "SOUND_FREQ", "0").c_str(), NULL, 0);
+	}
 
 	// GUI Language
-	conf->guiLanguage = strdup(config_file.fetch("NDS-BOOTSTRAP", "GUI_LANGUAGE").c_str());
+	if (argc >= 38 && argv[37] != "") {
+		conf->consoleModel = strtol(argv[37], NULL, 0);
+	} else {
+		conf->guiLanguage = strdup(config_file.fetch("NDS-BOOTSTRAP", "GUI_LANGUAGE").c_str());
+	}
 
 	// Hotkey
-	conf->hotkey = strtol(config_file.fetch("NDS-BOOTSTRAP", "HOTKEY").c_str(), NULL, 16);
+	if (argc >= 39 && argv[38] != "") {
+		conf->consoleModel = strtol(argv[38], NULL, 0);
+	} else {
+		conf->hotkey = strtol(config_file.fetch("NDS-BOOTSTRAP", "HOTKEY").c_str(), NULL, 16);
+	}
 
 	// Manual file path
-	conf->manualPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "MANUAL_PATH").c_str());
+	if (argc >= 40 && argv[39] != "") {
+		conf->consoleModel = strtol(argv[39], NULL, 0);
+	} else {
+		conf->manualPath = strdup(config_file.fetch("NDS-BOOTSTRAP", "MANUAL_PATH").c_str());
+	}
 }
+
+
 
 /*static void load_game_conf(configuration* conf, const char* fn, char* romTid) {
 	easysave::ini config_file(fn);
@@ -436,9 +664,9 @@ void getIgmStrings(configuration* conf, bool b4ds) {
 	}
 }
 
-int loadFromSD(configuration* conf, const char *bootstrapPath) {
-	fatMountSimple("sd", &__my_io_dsisd);
-	fatMountSimple("fat", dldiGetInternal());
+int loadFromARGV(configuration* conf, const char *bootstrapPath, int argc, char** argv) {
+	fatMountSimple("sd:/", &__my_io_dsisd);
+	fatMountSimple("fat:/", dldiGetInternal());
 
 	conf->sdFound = (access("sd:/", F_OK) == 0);
 	bool flashcardFound = (access("fat:/", F_OK) == 0);
@@ -450,7 +678,7 @@ int loadFromSD(configuration* conf, const char *bootstrapPath) {
 	}
 	nocashMessage("fatInitDefault");
 
-	if ((strncmp (bootstrapPath, "sd:/", 4) != 0) && (strncmp (bootstrapPath, "fat:/", 5) != 0)) {
+	if ((strncmp (argv[0], "sd:/", 4) != 0) && (strncmp (argv[0], "fat:/", 5) != 0)) {
 		//bootstrapPath = "sd:/_nds/nds-bootstrap-release.nds";
 		bootstrapPath = conf->sdFound ? "sd:/_nds/nds-bootstrap-nightly.nds" : "fat:/_nds/nds-bootstrap-nightly.nds";
 	}
@@ -508,7 +736,7 @@ int loadFromSD(configuration* conf, const char *bootstrapPath) {
 
 	conf->bootstrapOnFlashcard = ((bootstrapPath[0] == 'f' && bootstrapPath[1] == 'a' && bootstrapPath[2] == 't') || !conf->sdFound);
 
-	load_conf(conf, conf->bootstrapOnFlashcard ? "fat:/_nds/nds-bootstrap.ini" : "sd:/_nds/nds-bootstrap.ini");
+	load_conf(conf, conf->bootstrapOnFlashcard ? "fat:/_nds/nds-bootstrap.ini" : "sd:/_nds/nds-bootstrap.ini", argc, argv);
 
 	conf->initDisc = (REG_SCFG_EXT == 0);
 
