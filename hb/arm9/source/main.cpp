@@ -232,13 +232,32 @@ int main( int argc, char **argv) {
         // REG_SCFG_CLK = 0x80;
 		//REG_SCFG_EXT = 0x83000000; // NAND/SD Access
 
-		debug = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "DEBUG").c_str(), NULL, 0);
-		if (debug)
-			consoleDemoInit();
-
 		std::string	bootstrapPath = argv[0];
         std::string	substr = "sd:/";
         if(strncmp(bootstrapPath.c_str(), substr.c_str(), substr.size()) == 0) bootstrapPath = ReplaceAll(bootstrapPath, "sd:/", "fat:/");
+
+		std::string	ndsPath(config_file.fetch("NDS-BOOTSTRAP", "NDS_PATH"));
+		if (argc > 1 && argv[1] != "") {
+			ndsPath = strdup(argv[1]);
+		}
+        if(strncmp(ndsPath.c_str(), substr.c_str(), substr.size()) == 0)
+			ndsPath = ReplaceAll(ndsPath, "sd:/", "fat:/");
+
+		std::string	ramDrivePath(config_file.fetch("NDS-BOOTSTRAP", "RAM_DRIVE_PATH"));
+		if (argc > 2 && argv[2] != "") {
+			ramDrivePath = strdup(argv[2]);
+		}
+		if (ramDrivePath != "") {
+			if(strncmp(ramDrivePath.c_str(), substr.c_str(), substr.size()) == 0)
+				ramDrivePath = ReplaceAll(ramDrivePath, "sd:/", "fat:/");
+		}
+
+		debug = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "DEBUG").c_str(), NULL, 0);
+		if (argc > 3 && argv[3] != "") {
+			debug = (bool)strtol(argv[3], NULL, 0);
+		}
+		if (debug)
+			consoleDemoInit();
 
 		nitroFSInit(bootstrapPath.c_str());
 
@@ -246,7 +265,7 @@ int main( int argc, char **argv) {
 		mkdir("fat:/_nds/nds-bootstrap", 0777);
 		mkdir("fat:/_nds/nds-bootstrap/patchOffsetCache", 0777);
 
-		if ((bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "RESETSLOT1").c_str(), NULL, 0)) {
+		if ( (argc > 4 && (bool)strtol(argv[4], NULL, 0) ) || ((bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "RESETSLOT1").c_str(), NULL, 0))) {
 			if(REG_SCFG_MC == 0x11) { 
 				iprintf("Please insert a cartridge...\n");
 				do { swiWaitForVBlank(); } 
@@ -257,11 +276,16 @@ int main( int argc, char **argv) {
 
 		// Language
 		int language = strtol(config_file.fetch("NDS-BOOTSTRAP", "LANGUAGE").c_str(), NULL, 0);
+		if (argc > 5 && argv[5] != "") {
+			language = strtol(argv[5], NULL, 0);
+		}
 
 		// DSi Mode
 		int dsiMode = strtol(config_file.fetch("NDS-BOOTSTRAP", "DSI_MODE").c_str(), NULL, 0);
-
-		if (dsiMode>0 || (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_CPU").c_str(), NULL, 0)) {	
+		if (argc > 6 && argv[6] != "") {
+			dsiMode = strtol(argv[6], NULL, 0);
+		}
+		if (dsiMode>0 || ( (argc > 7 && (bool)strtol(argv[7], NULL, 0) ) || (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_CPU").c_str(), NULL, 0)) ) {	
 			dbg_printf("CPU boosted\n");
 			//REG_SCFG_CLK |= 0x1;
 		} else {
@@ -269,13 +293,16 @@ int main( int argc, char **argv) {
 			fifoSendValue32(FIFO_USER_07, 1);
 		}
 
-		bool boostVram = (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_VRAM").c_str(), NULL, 0);
+		bool boostVram = ( (argc > 8 && (bool)strtol(argv[8], NULL, 0) ) || (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "BOOST_VRAM").c_str(), NULL, 0) );
 		if (dsiMode>0 || boostVram) {	
 			dbg_printf("VRAM boosted\n");
 		}
 
 		// Console model
 		int consoleModel = strtol(config_file.fetch("NDS-BOOTSTRAP", "CONSOLE_MODEL").c_str(), NULL, 0);
+		if (argc > 9 && argv[9] != "") {
+			consoleModel = strtol(argv[9], NULL, 0);
+		}
 
 		fifoSendValue32(FIFO_USER_03, 1);
 		fifoWaitValue32(FIFO_USER_05);
@@ -292,7 +319,7 @@ int main( int argc, char **argv) {
 			dbg_printf("No arguments passed!\n");
 		}
 
-		if ((bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "LOGGING").c_str(), NULL, 0)) {
+		if ( (argc > 10 && (bool)strtol(argv[10], NULL, 0) ) || (bool)strtol(config_file.fetch("NDS-BOOTSTRAP", "LOGGING").c_str(), NULL, 0)) {
 			static FILE * loggingFile = fopen ("fat:/NDSBTSRP.LOG","w");
 			fprintf(loggingFile, "LOGGING MODE\n");			
 			fclose (loggingFile);
@@ -308,20 +335,13 @@ int main( int argc, char **argv) {
 			remove ("fat:/NDSBTSRP.LOG");
 		}
 
-		std::string	ndsPath(config_file.fetch("NDS-BOOTSTRAP", "NDS_PATH"));
-        if(strncmp(ndsPath.c_str(), substr.c_str(), substr.size()) == 0)
-			ndsPath = ReplaceAll(ndsPath, "sd:/", "fat:/");
-
 		std::string	homebrewArg(config_file.fetch("NDS-BOOTSTRAP", "HOMEBREW_ARG"));
+		if (argc > 11) {
+			homebrewArg = strtol(argv[11], NULL, 0);
+		}
 		if (homebrewArg != "") {
 			if(strncmp(homebrewArg.c_str(), substr.c_str(), substr.size()) == 0)
 				homebrewArg = ReplaceAll(homebrewArg, "sd:/", "fat:/");
-		}
-
-		std::string	ramDrivePath(config_file.fetch("NDS-BOOTSTRAP", "RAM_DRIVE_PATH"));
-		if (ramDrivePath != "") {
-			if(strncmp(ramDrivePath.c_str(), substr.c_str(), substr.size()) == 0)
-				ramDrivePath = ReplaceAll(ramDrivePath, "sd:/", "fat:/");
 		}
 
 		std::string	romfolder = ndsPath;
